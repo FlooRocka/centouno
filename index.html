@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>CENTOUNO</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --felt: #1b4332;
+      --felt-border: #2d6a4f;
+      --wood-rim: #402814;
+      --card-bg: #ffffff;
+      --text: #f8fafc;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --surface: #1e293b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #131b2e 0%, #060911 100%);
+      color: var(--text);
+      overscroll-behavior: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    header {
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 15, 26, 0.92);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.82rem;
+      z-index: 20;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .room-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+    }
+    .badge-group { display: flex; gap: 6px; align-items: center; }
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.72rem;
+    }
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 0.9rem;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .icon-btn.active-call {
+      background: var(--success);
+      border-color: #86efac;
+    }
+
+    #leave-toast {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(239, 68, 68, 0.95);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      z-index: 150;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #leave-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #arena {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .poker-table {
+      position: absolute;
+      width: 90%;
+      height: 72%;
+      background: radial-gradient(ellipse at center, #235d46 0%, #16382b 75%, #0e241c 100%);
+      border-radius: 50%;
+      border: 8px solid var(--wood-rim);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: box-shadow 0.3s ease;
+    }
+    .poker-table.my-turn-glow {
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 25px rgba(56, 189, 248, 0.7), inset 0 0 15px rgba(56, 189, 248, 0.4);
+      border-color: #38bdf8;
+    }
+
+    .piles-area {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .table-uno-btn {
+      z-index: 10;
+      background: #dc2626;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 2px solid #fef08a;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .table-uno-btn.success {
+      background: var(--success);
+      border-color: #bbf7d0;
+    }
+
+    .avatar-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      width: 72px;
+      pointer-events: none;
+    }
+    .avatar-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .avatar-badge-cards {
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      background: #0f172a;
+      border: 1.5px solid var(--accent);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 999px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .avatar-info {
+      margin-top: 4px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 2px 6px;
+      text-align: center;
+      max-width: 74px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .avatar-name {
+      font-size: 0.68rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #e2e8f0;
+    }
+    .avatar-score {
+      font-size: 0.62rem;
+      color: #94a3b8;
+    }
+
+    .avatar-node.active-turn {
+      transform: translate(-50%, -50%) scale(1.12);
+      z-index: 15;
+    }
+    .avatar-node.active-turn .avatar-circle {
+      border-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent-glow), inset 0 0 8px var(--accent);
+    }
+    .avatar-node.active-turn .avatar-info {
+      border-color: var(--accent);
+      background: rgba(14, 165, 233, 0.25);
+    }
+    .avatar-node.eliminated {
+      opacity: 0.35;
+      filter: grayscale(1);
+    }
+
+    .card {
+      width: clamp(62px, 17vw, 78px);
+      height: clamp(90px, 25vw, 114px);
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px;
+      font-weight: 800;
+      color: #1e293b;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .card.red { color: #dc2626; }
+    .card-top { font-size: clamp(0.72rem, 3vw, 0.9rem); line-height: 1; }
+    .card-mid { font-size: clamp(1.2rem, 5vw, 1.6rem); text-align: center; }
+    .card-bot { font-size: clamp(0.72rem, 3vw, 0.9rem); line-height: 1; text-align: right; }
+    
+    .card-back {
+      background: repeating-linear-gradient(45deg, #1e3a8a, #1e3a8a 8px, #172554 8px, #172554 16px);
+      border: 2px solid #fff;
+    }
+
+    #hand-area {
+      padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+      background: rgba(10, 15, 26, 0.96);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .game-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+    .hand-meta-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .active-suit-pill {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 2px 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .active-suit-pill.red {
+      border-color: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+    .active-suit-pill.black {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+    .active-suit-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .fan-container {
+      width: 100%;
+      height: clamp(114px, 32vw, 140px);
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      position: relative;
+      perspective: 800px;
+      overflow: visible;
+      padding-bottom: 4px;
+    }
+
+    .fan-card {
+      position: absolute;
+      transform-origin: 50% 120%;
+      box-shadow: -2px 4px 10px rgba(0,0,0,0.4);
+    }
+    
+    .btn {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+    .modal.hidden { display: none !important; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 20px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 90dvh;
+      overflow-y: auto;
+    }
+    .input-field {
+      padding: 12px;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #fff;
+      border: 1px solid #334155;
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+    }
+    .suit-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .suit-btn {
+      padding: 14px;
+      font-size: 1.8rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .suit-btn.red { color: #f87171; }
+    .lobby-player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      background: #0f172a;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .voice-panel {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+    .voice-user-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="leave-toast">⚠️ Un giocatore ha lasciato la stanza</div>
+
+  <header>
+    <div class="header-left">
+      <strong>CENTOUNO</strong>
+      <span id="room-id-badge" class="room-badge">----</span>
+    </div>
+    <div class="badge-group">
+      <button id="voice-toggle-btn" class="icon-btn" onclick="toggleVoiceCall()" title="Chat Vocale">🎙️</button>
+      <div id="status-direction" class="badge">↻ Orario</div>
+      <div id="status-turn" class="badge">Lobby</div>
+      <button class="icon-btn" onclick="openMenuModal()">⚙️</button>
+    </div>
+  </header>
+
+  <main id="arena">
+    <div id="table-opponents-layer"></div>
+
+    <div id="table-felt-box" class="poker-table">
+      <div class="piles-area">
+        <div class="card-slot">
+          <div id="deck" class="card card-back" onclick="actionDraw()"></div>
+        </div>
+
+        <div class="card-slot">
+          <div id="top-card" class="card"></div>
+        </div>
+      </div>
+
+      <button id="always-uno-btn" class="table-uno-btn" onclick="clickUnoButton()">🔔 CHIAMA UNO!</button>
+    </div>
+  </main>
+
+  <section id="hand-area">
+    <div class="game-actions">
+      <div class="hand-meta-left">
+        <span>La tua mano (<span id="my-cards-count">0</span>) | Punti: <strong id="my-score-display" style="color: var(--accent);">0</strong>/101</span>
+        <div id="suit-pill-box" class="active-suit-pill">
+          <span style="font-size: 0.65rem; text-transform: uppercase; color: #94a3b8;">Seme:</span>
+          <span id="active-suit-display" class="active-suit-icon">♥️</span>
+        </div>
+      </div>
+      <button id="btn-draw" class="btn" onclick="actionDraw()">Pesca carta</button>
+    </div>
+    <div id="my-hand" class="fan-container"></div>
+  </section>
+
+  <!-- HOME MODAL -->
+  <div id="modal-home" class="modal">
+    <div class="modal-box">
+      <h2>🃏 CENTOUNO</h2>
+      <p style="font-size: 0.85rem; color: #94a3b8;">Inserisci il tuo nome per iniziare</p>
+      
+      <input type="text" id="player-nickname" class="input-field" placeholder="Tuo Nome / Nickname" maxlength="12" />
+
+      <button class="btn" onclick="goToCreateRoom()">👑 Crea Nuova Stanza</button>
+      
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="room-code-input" class="input-field" placeholder="Codice Stanza" style="text-transform: uppercase;" />
+        <button class="btn btn-secondary" onclick="joinExistingRoom()">Entra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STANZA MODAL -->
+  <div id="modal-room" class="modal hidden">
+    <div class="modal-box">
+      <div>
+        <span style="font-size: 0.8rem; color: #94a3b8;">Codice Stanza:</span>
+        <h1 id="room-code-display" style="letter-spacing: 3px; color: var(--accent); margin: 2px 0;">----</h1>
+        <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 6px 12px; margin-top: 4px;" onclick="copyRoomLink()">Copia Link WhatsApp</button>
+      </div>
+
+      <div style="text-align: center; background: #0f172a; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; color: #94a3b8;">
+        🃏 Carte a testa: <strong style="color: var(--accent);">5</strong>
+      </div>
+
+      <div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+          <span>Giocatori (<span id="lobby-count">1</span>/7):</span>
+        </div>
+        <div id="lobby-list" class="lobby-player-list"></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-start-game" class="btn" onclick="pressStartGame()">Avvia Partita</button>
+        <button id="btn-host-change-room" class="btn btn-secondary" onclick="hostChangeRoomAction()">🚪 Cambia Stanza</button>
+      </div>
+
+      <p id="guest-waiting-text" class="hidden" style="font-size: 0.8rem; color: #94a3b8;">In attesa che l'Host avvii la partita...</p>
+    </div>
+  </div>
+
+  <!-- MODAL INVITO CHIAMATA VOCALE -->
+  <div id="modal-voice-invite" class="modal hidden">
+    <div class="modal-box">
+      <h3>📞 Chiamata Vocale</h3>
+      <p id="voice-invite-msg" style="font-size: 0.88rem; color: #cbd5e1;">Un giocatore ha avviato la chat vocale nella stanza.</p>
+      <div style="display: flex; gap: 10px; margin-top: 6px;">
+        <button class="btn" style="flex: 1; background: var(--success);" onclick="acceptVoiceCall()">Accetta</button>
+        <button class="btn btn-secondary" style="flex: 1;" onclick="declineVoiceCall()">Rifiuta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PANNELLO VOCALE / GESTIONE MUTO & USCITA -->
+  <div id="modal-voice-panel" class="modal hidden">
+    <div class="modal-box">
+      <h3>🎙️ Chat Vocale Attiva</h3>
+      <div id="voice-participants-list" class="voice-panel"></div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-toggle-my-mic" class="btn" style="flex: 1;" onclick="toggleMyMic()">Muta Microfono</button>
+          <button class="btn btn-danger" style="flex: 1;" onclick="leaveVoiceCall()">Esci dalla Vocale</button>
+        </div>
+        <button class="btn btn-secondary" onclick="closeVoicePanel()">Chiudi Pannello</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SCEGLI SEME (9) -->
+  <div id="suit-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3>Scegli il Seme</h3>
+      <div class="suit-select-grid">
+        <button class="suit-btn red" onclick="chooseSuit('♥️')">♥️</button>
+        <button class="suit-btn red" onclick="chooseSuit('♦️')">♦️</button>
+        <button class="suit-btn" onclick="chooseSuit('♣️')">♣️</button>
+        <button class="suit-btn" onclick="chooseSuit('♠️')">♠️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU OPZIONI -->
+  <div id="modal-menu" class="modal hidden">
+    <div class="modal-box">
+      <h3>Opzioni Partita</h3>
+      <p style="font-size: 0.85rem; color: #94a3b8;">Scegli un'azione:</p>
+
+      <button class="btn" onclick="openVoicePanelFromMenu()">🎙️ Gestisci Chat Vocale</button>
+      <button id="btn-end-game" class="btn btn-danger" onclick="hostEndGameAction()">⏹️ Termina Partita e Torna alla Home</button>
+      <button class="btn btn-secondary" onclick="leaveRoomAction()">🚪 Esci alla Home</button>
+      <button class="btn" onclick="closeMenuModal()">Torna al Gioco</button>
+    </div>
+  </div>
+
+  <!-- FINE ROUND -->
+  <div id="info-modal" class="modal hidden">
+    <div class="modal-box">
+      <h2 id="info-title">Round Concluso</h2>
+      <p id="info-msg" style="white-space: pre-line; font-size: 0.85rem; line-height: 1.4;"></p>
+
+      <button class="btn" id="info-btn" onclick="nextRoundAction()">Prossimo Turno</button>
+      <p id="guest-info-waiting" class="hidden" style="font-size: 0.8rem; color: #94a3b8;">In attesa dell'Host...</p>
+    </div>
+  </div>
+
+  <script>
+    let audioCtx = null;
+    let noiseBufferCache = null;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function getNoiseBuffer() {
+      if (noiseBufferCache) return noiseBufferCache;
+      if (!audioCtx) return null;
+      const bufferSize = audioCtx.sampleRate * 0.4;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      noiseBufferCache = buffer;
+      return buffer;
+    }
+
+    function soundPlayCard() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = getNoiseBuffer();
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(2600, now);
+      noiseFilter.Q.setValueAtTime(2.2, now);
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.8, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+      noise.start(now);
+      noise.stop(now + 0.06);
+
+      const bodyOsc = audioCtx.createOscillator();
+      const bodyGain = audioCtx.createGain();
+      bodyOsc.type = 'sine';
+      bodyOsc.frequency.setValueAtTime(140, now);
+      bodyOsc.frequency.exponentialRampToValueAtTime(45, now + 0.07);
+
+      bodyGain.gain.setValueAtTime(0.5, now);
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+      bodyOsc.connect(bodyGain);
+      bodyGain.connect(audioCtx.destination);
+      bodyOsc.start(now);
+      bodyOsc.stop(now + 0.07);
+    }
+
+    function soundDrawCard() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = getNoiseBuffer();
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1000, now);
+      filter.frequency.linearRampToValueAtTime(1800, now + 0.06);
+      filter.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+      filter.Q.setValueAtTime(1.8, now);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.45, now + 0.035);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(now);
+      noise.stop(now + 0.14);
+    }
+
+    function soundTurnClose() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = getNoiseBuffer();
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+      filter.frequency.exponentialRampToValueAtTime(350, now + 0.18);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start(now);
+      noise.stop(now + 0.19);
+    }
+
+    function soundYourTurn() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.setValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    }
+
+    function soundShuffleCards() {
+      initAudioContext();
+      if (!audioCtx) return;
+      let delay = 0;
+      for (let i = 0; i < 7; i++) {
+        setTimeout(() => {
+          soundDrawCard();
+        }, delay * 1000);
+        delay += 0.038 + Math.random() * 0.02;
+      }
+    }
+
+    function soundTeasingPenalty() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const notes = [587.33, 523.25, 440, 349.23];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.85, now + idx * 0.1 + 0.09);
+        gain.gain.setValueAtTime(0.25, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.09);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.09);
+      });
+    }
+
+    function soundUnoBroadcast() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const freqs = [783.99, 1174.66, 1567.98];
+      
+      freqs.forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now + i * 0.05);
+        
+        gain.gain.setValueAtTime(0.35, now + i * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.6);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.05);
+        osc.stop(now + i * 0.05 + 0.6);
+      });
+    }
+
+    function soundVictoryFanfare() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const melody = [
+        { f: 523.25, t: 0.0, d: 0.15 },
+        { f: 659.25, t: 0.15, d: 0.15 },
+        { f: 783.99, t: 0.3, d: 0.15 },
+        { f: 1046.50, t: 0.45, d: 0.5 }
+      ];
+
+      melody.forEach(note => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        
+        gain.gain.setValueAtTime(0.4, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + note.d);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + note.d);
+      });
+    }
+
+    let localStream = null;
+    let peerConnections = {};
+    let remoteAudioElements = {};
+    let mutedPeers = {};
+    let isMicMuted = false;
+    let isInVoiceCall = false;
+    let lastSeenVoiceCallTimestamp = 0;
+
+    const rtcConfig = {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    };
+
+    function toggleVoiceCall() {
+      if (isInVoiceCall) {
+        openVoicePanel();
+      } else {
+        startOrJoinVoiceCall();
+      }
+    }
+
+    function openVoicePanelFromMenu() {
+      closeMenuModal();
+      openVoicePanel();
+    }
+
+    function openVoicePanel() {
+      if (!isInVoiceCall) {
+        startOrJoinVoiceCall();
+        return;
+      }
+      renderVoiceParticipantsList();
+      document.getElementById('modal-voice-panel').classList.remove('hidden');
+    }
+
+    function closeVoicePanel() {
+      document.getElementById('modal-voice-panel').classList.add('hidden');
+    }
+
+    function startOrJoinVoiceCall() {
+      initAudioContext();
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          localStream = stream;
+          isInVoiceCall = true;
+          document.getElementById('voice-toggle-btn').classList.add('active-call');
+
+          if (roomRef && currentGameState) {
+            roomRef.child('voiceCallSignal').set({
+              senderId: myId,
+              senderName: myNickname,
+              type: 'start',
+              timestamp: Date.now()
+            });
+          }
+
+          setupWebRTCConnections();
+          openVoicePanel();
+        })
+        .catch(err => {
+          alert("Impossibile accedere al microfono: " + err.message);
+        });
+    }
+
+    function acceptVoiceCall() {
+      document.getElementById('modal-voice-invite').classList.add('hidden');
+      startOrJoinVoiceCall();
+    }
+
+    function declineVoiceCall() {
+      document.getElementById('modal-voice-invite').classList.add('hidden');
+    }
+
+    function leaveVoiceCall() {
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      Object.values(peerConnections).forEach(pc => pc.close());
+      peerConnections = {};
+      Object.values(remoteAudioElements).forEach(el => el.remove());
+      remoteAudioElements = {};
+      isInVoiceCall = false;
+      document.getElementById('voice-toggle-btn').classList.remove('active-call');
+      closeVoicePanel();
+    }
+
+    function toggleMyMic() {
+      if (!localStream) return;
+      isMicMuted = !isMicMuted;
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !isMicMuted;
+      });
+      const btn = document.getElementById('btn-toggle-my-mic');
+      btn.textContent = isMicMuted ? "Riattiva Microfono" : "Muta Microfono";
+      btn.style.background = isMicMuted ? "var(--danger)" : "var(--accent)";
+      renderVoiceParticipantsList();
+    }
+
+    function togglePeerMute(peerId) {
+      mutedPeers[peerId] = !mutedPeers[peerId];
+      if (remoteAudioElements[peerId]) {
+        remoteAudioElements[peerId].muted = mutedPeers[peerId];
+      }
+      renderVoiceParticipantsList();
+    }
+
+    function renderVoiceParticipantsList() {
+      const listEl = document.getElementById('voice-participants-list');
+      if (!currentGameState || !currentGameState.players) return;
+
+      listEl.innerHTML = `
+        <div class="voice-user-row" style="background: rgba(56, 189, 248, 0.15); font-weight: bold;">
+          <span>👑 Tu (${myNickname})</span>
+          <span style="color: ${isMicMuted ? 'var(--danger)' : 'var(--success)'};">${isMicMuted ? 'Mutato 🔇' : 'In onda 🎙️'}</span>
+        </div>
+      `;
+
+      currentGameState.players.forEach(p => {
+        if (p.id !== myId) {
+          const isMuted = !!mutedPeers[p.id];
+          listEl.innerHTML += `
+            <div class="voice-user-row">
+              <span>👤 ${p.name}</span>
+              <button class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="togglePeerMute('${p.id}')">
+                ${isMuted ? 'Riattiva Audio' : 'Silenzia'}
+              </button>
+            </div>
+          `;
+        }
+      });
+    }
+
+    function setupWebRTCConnections() {
+      if (!roomRef || !currentGameState || !currentGameState.players) return;
+
+      roomRef.child('webrtc').on('child_added', snapshot => {
+        const msg = snapshot.val();
+        if (!msg || msg.targetId !== myId) return;
+
+        let pc = peerConnections[msg.senderId];
+        if (!pc) {
+          pc = createPeerConnection(msg.senderId);
+        }
+
+        if (msg.type === 'offer') {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+            .then(() => pc.createAnswer())
+            .then(answer => pc.setLocalDescription(answer))
+            .then(() => {
+              roomRef.child('webrtc').push({
+                senderId: myId,
+                targetId: msg.senderId,
+                type: 'answer',
+                sdp: pc.localDescription
+              });
+            });
+        } else if (msg.type === 'answer') {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        } else if (msg.type === 'candidate') {
+          pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+        }
+      });
+
+      currentGameState.players.forEach(p => {
+        if (p.id !== myId && !peerConnections[p.id]) {
+          const pc = createPeerConnection(p.id);
+          pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+              roomRef.child('webrtc').push({
+                senderId: myId,
+                targetId: p.id,
+                type: 'offer',
+                sdp: pc.localDescription
+              });
+            });
+        }
+      });
+    }
+
+    function createPeerConnection(peerId) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections[peerId] = pc;
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      }
+
+      pc.onicecandidate = event => {
+        if (event.candidate && roomRef) {
+          roomRef.child('webrtc').push({
+            senderId: myId,
+            targetId: peerId,
+            type: 'candidate',
+            candidate: event.candidate
+          });
+        }
+      };
+
+      pc.ontrack = event => {
+        let audioEl = remoteAudioElements[peerId];
+        if (!audioEl) {
+          audioEl = document.createElement('audio');
+          audioEl.autoplay = true;
+          document.body.appendChild(audioEl);
+          remoteAudioElements[peerId] = audioEl;
+        }
+        audioEl.srcObject = event.streams[0];
+        audioEl.muted = !!mutedPeers[peerId];
+      };
+
+      return pc;
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDA5mlSdpVrMMVIeCYhSVyEja04HCqUIQg",
+      authDomain: "gioco-101.firebaseapp.com",
+      databaseURL: "https://gioco-101-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "gioco-101",
+      storageBucket: "gioco-101.firebasestorage.app",
+      messagingSenderId: "532140715101",
+      appId: "1:532140715101:web:dea0c76dcb952f41d2f1b4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const SUITS = ['♥️', '♦️', '♣️', '♠️'];
+
+    let myId = localStorage.getItem('gioco101_userId');
+    if (!myId) {
+      myId = 'user_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('gioco101_userId', myId);
+    }
+
+    let myNickname = localStorage.getItem('gioco101_userName') || "";
+    let currentRoomCode = "";
+    let roomRef = null;
+    let isHost = false;
+    let currentGameState = null;
+    let pending9CardIndex = -1;
+
+    let unoPenaltyTimeout = null;
+    let hasCalledUnoSuccessfully = false;
+    let lastSeenLeaveTimestamp = 0;
+    let lastSeenUnoTimestamp = 0;
+    let lastSeenVictoryTimestamp = 0;
+    let previousDiscardCount = 0;
+    let lastHandLength = 5;
+    let wasMyTurnPrevious = false;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedName = localStorage.getItem('gioco101_userName');
+      if (savedName) {
+        document.getElementById('player-nickname').value = savedName;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomUrl = urlParams.get('room');
+      const savedRoom = localStorage.getItem('gioco101_activeRoom');
+      const targetRoom = (roomUrl || savedRoom || "").toUpperCase();
+
+      if (targetRoom) {
+        document.getElementById('room-code-input').value = targetRoom;
+        if (savedRoom && savedRoom === targetRoom) {
+          reconnectToRoom(targetRoom);
+        }
+      }
+
+      document.addEventListener('touchstart', initAudioContext, { once: true });
+      document.addEventListener('click', initAudioContext, { once: true });
+    });
+
+    function showLeaveToast(message) {
+      const toast = document.getElementById('leave-toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    function getPoints(val) {
+      if (val === 'A') return 1;
+      if (['J', 'Q', 'K'].includes(val)) return 5;
+      return parseInt(val, 10);
+    }
+
+    function createDeckForPlayerCount(playerCount) {
+      let validValues = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+      if (playerCount === 6) {
+        validValues.push('J', 'Q');
+      } else if (playerCount >= 7) {
+        validValues.push('J', 'Q', 'K');
+      }
+
+      const d = [];
+      for (const suit of SUITS) {
+        for (const val of validValues) {
+          d.push({ suit, value: val, red: suit === '♥️' || suit === '♦️' });
+        }
+      }
+      return d.sort(() => Math.random() - 0.5);
+    }
+
+    function returnToHomeView() {
+      clearUnoTimer();
+      if (roomRef && typeof roomRef.off === 'function') {
+        roomRef.off();
+        roomRef = null;
+      }
+      currentRoomCode = "";
+      currentGameState = null;
+      isHost = false;
+      previousDiscardCount = 0;
+      lastHandLength = 5;
+      wasMyTurnPrevious = false;
+
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      Object.values(peerConnections).forEach(pc => pc.close());
+      peerConnections = {};
+      Object.values(remoteAudioElements).forEach(el => el.remove());
+      remoteAudioElements = {};
+      isInVoiceCall = false;
+      const voiceBtn = document.getElementById('voice-toggle-btn');
+      if (voiceBtn) voiceBtn.classList.remove('active-call');
+
+      localStorage.removeItem('gioco101_activeRoom');
+
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      document.getElementById('room-id-badge').textContent = "----";
+      document.getElementById('modal-home').classList.remove('hidden');
+      document.getElementById('modal-room').classList.add('hidden');
+      document.getElementById('modal-menu').classList.add('hidden');
+      document.getElementById('info-modal').classList.add('hidden');
+      document.getElementById('suit-modal').classList.add('hidden');
+      document.getElementById('modal-voice-invite').classList.add('hidden');
+      document.getElementById('modal-voice-panel').classList.add('hidden');
+
+      document.getElementById('table-opponents-layer').innerHTML = '';
+      document.getElementById('my-hand').innerHTML = '';
+      document.getElementById('my-cards-count').textContent = '0';
+      document.getElementById('my-score-display').textContent = '0';
+      document.getElementById('status-turn').textContent = 'Lobby';
+    }
+
+    function goToCreateRoom() {
+      const nameInput = document.getElementById('player-nickname').value.trim();
+      if (!nameInput) {
+        alert("Inserisci il tuo nome per continuare!");
+        document.getElementById('player-nickname').focus();
+        return;
+      }
+
+      myNickname = nameInput;
+      localStorage.setItem('gioco101_userName', myNickname);
+      currentRoomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+      localStorage.setItem('gioco101_activeRoom', currentRoomCode);
+      isHost = true;
+
+      roomRef = db.ref('rooms/' + currentRoomCode);
+      const initialData = {
+        hostId: myId,
+        status: 'lobby',
+        players: [{ id: myId, name: myNickname, hand: [], score: 0, eliminated: false }],
+        cardsPerPlayer: 5,
+        consecutiveWins: {}
+      };
+
+      roomRef.set(initialData).then(() => {
+        showRoomModal();
+        listenToRoom();
+      });
+    }
+
+    function joinExistingRoom() {
+      const nameInput = document.getElementById('player-nickname').value.trim();
+      if (!nameInput) {
+        alert("Inserisci il tuo nome per continuare!");
+        document.getElementById('player-nickname').focus();
+        return;
+      }
+
+      const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+      if (!code) return alert("Inserisci il codice della stanza!");
+
+      myNickname = nameInput;
+      localStorage.setItem('gioco101_userName', myNickname);
+
+      currentRoomCode = code;
+      localStorage.setItem('gioco101_activeRoom', currentRoomCode);
+      roomRef = db.ref('rooms/' + currentRoomCode);
+
+      roomRef.once('value').then(snapshot => {
+        const val = snapshot.val();
+        if (!val || val.status === 'ended') {
+          localStorage.removeItem('gioco101_activeRoom');
+          return alert("Stanza non trovata o terminata!");
+        }
+
+        isHost = (val.hostId === myId);
+
+        let list = val.players ? (Array.isArray(val.players) ? val.players : Object.values(val.players)) : [];
+        const existingPlayer = list.find(p => p.id === myId || p.name.toLowerCase() === myNickname.toLowerCase());
+
+        if (existingPlayer) {
+          existingPlayer.id = myId;
+          existingPlayer.name = myNickname;
+          roomRef.child('players').set(list).then(() => {
+            showRoomModal();
+            listenToRoom();
+          });
+          return;
+        }
+
+        if (val.status !== 'lobby') {
+          return alert("La partita in questa stanza è già iniziata!");
+        }
+
+        if (list.length >= 7) {
+          return alert("Stanza piena (massimo 7 giocatori)!");
+        }
+
+        list.push({ id: myId, name: myNickname, hand: [], score: 0, eliminated: false });
+        roomRef.child('players').set(list).then(() => {
+          showRoomModal();
+          listenToRoom();
+        });
+      });
+    }
+
+    function reconnectToRoom(code) {
+      currentRoomCode = code;
+      roomRef = db.ref('rooms/' + currentRoomCode);
+
+      roomRef.once('value').then(snapshot => {
+        const val = snapshot.val();
+        if (!val || val.status === 'ended') {
+          localStorage.removeItem('gioco101_activeRoom');
+          return;
+        }
+
+        let list = val.players ? (Array.isArray(val.players) ? val.players : Object.values(val.players)) : [];
+        const exists = list.some(p => p.id === myId);
+
+        if (exists) {
+          isHost = (val.hostId === myId);
+          showRoomModal();
+          listenToRoom();
+        } else {
+          localStorage.removeItem('gioco101_activeRoom');
+        }
+      });
+    }
+
+    function showRoomModal() {
+      document.getElementById('modal-home').classList.add('hidden');
+      document.getElementById('modal-room').classList.remove('hidden');
+      document.getElementById('room-code-display').textContent = currentRoomCode;
+      document.getElementById('room-id-badge').textContent = currentRoomCode;
+
+      const btnStart = document.getElementById('btn-start-game');
+      const btnChange = document.getElementById('btn-host-change-room');
+      const guestText = document.getElementById('guest-waiting-text');
+
+      if (!isHost) {
+        btnStart.style.display = 'none';
+        btnChange.style.display = 'none';
+        guestText.classList.remove('hidden');
+      } else {
+        btnStart.style.display = 'block';
+        btnChange.style.display = 'block';
+        guestText.classList.add('hidden');
+      }
+    }
+
+    function hostChangeRoomAction() {
+      if (!confirm("Vuoi annullare questa stanza e sceglierne/crearne un'altra?")) return;
+      if (roomRef) {
+        roomRef.update({ status: 'ended' }).then(() => {
+          returnToHomeView();
+        });
+      } else {
+        returnToHomeView();
+      }
+    }
+
+    function listenToRoom() {
+      roomRef.on('value', snapshot => {
+        const data = snapshot.val();
+        if (!data || data.status === 'ended') {
+          returnToHomeView();
+          return;
+        }
+
+        if (data.lastPlayerLeft && data.lastPlayerLeft.timestamp > lastSeenLeaveTimestamp) {
+          lastSeenLeaveTimestamp = data.lastPlayerLeft.timestamp;
+          if (data.lastPlayerLeft.id !== myId) {
+            showLeaveToast(`⚠️ ${data.lastPlayerLeft.name} ha lasciato la stanza`);
+          }
+        }
+
+        if (data.lastUnoCall && data.lastUnoCall.timestamp > lastSeenUnoTimestamp) {
+          lastSeenUnoTimestamp = data.lastUnoCall.timestamp;
+          soundUnoBroadcast();
+        }
+
+        if (data.lastRoundVictory && data.lastRoundVictory.timestamp > lastSeenVictoryTimestamp) {
+          lastSeenVictoryTimestamp = data.lastRoundVictory.timestamp;
+          soundVictoryFanfare();
+        }
+
+        if (data.voiceCallSignal && data.voiceCallSignal.senderId !== myId && data.voiceCallSignal.timestamp > lastSeenVoiceCallTimestamp) {
+          lastSeenVoiceCallTimestamp = data.voiceCallSignal.timestamp;
+          if (data.voiceCallSignal.type === 'start' && !isInVoiceCall) {
+            document.getElementById('voice-invite-msg').textContent = `${data.voiceCallSignal.senderName} ha avviato la chat vocale. Vuoi unirti?`;
+            document.getElementById('modal-voice-invite').classList.remove('hidden');
+          }
+        }
+
+        if (data.players) {
+          data.players = Array.isArray(data.players) ? data.players : Object.values(data.players);
+          data.players.forEach(p => {
+            if (!p.hand) p.hand = [];
+            else if (!Array.isArray(p.hand)) p.hand = Object.values(p.hand);
+          });
+        }
+        if (data.deck && !Array.isArray(data.deck)) data.deck = Object.values(data.deck);
+        if (data.discardPile && !Array.isArray(data.discardPile)) data.discardPile = Object.values(data.discardPile);
+
+        currentGameState = data;
+        isHost = (data.hostId === myId);
+
+        document.getElementById('room-id-badge').textContent = currentRoomCode;
+
+        if (data.status === 'lobby') {
+          showRoomModal();
+          updateLobbyUI(data.players || []);
+        } else if (data.status === 'playing') {
+          document.getElementById('modal-home').classList.add('hidden');
+          document.getElementById('modal-room').classList.add('hidden');
+          document.getElementById('info-modal').classList.add('hidden');
+          updateGameUI();
+        } else if (data.status === 'round_over') {
+          clearUnoTimer();
+          showRoundOverModal(data.roundSummary, data.isGameEnd);
+        }
+      });
+    }
+
+    function updateLobbyUI(players) {
+      const list = document.getElementById('lobby-list');
+      list.innerHTML = '';
+      players.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.textContent = `${i + 1}. ${p.name} ${p.id === myId ? '(Tu)' : ''} ${p.id === currentGameState.hostId ? '👑' : ''}`;
+        list.appendChild(item);
+      });
+      document.getElementById('lobby-count').textContent = players.length;
+    }
+
+    function copyRoomLink() {
+      const url = `${window.location.origin}${window.location.pathname}?room=${currentRoomCode}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert("Link copiato! Invialo su WhatsApp ai tuoi amici.");
+      });
+    }
+
+    function openMenuModal() {
+      const endBtn = document.getElementById('btn-end-game');
+      if (isHost) {
+        endBtn.style.display = 'block';
+      } else {
+        endBtn.style.display = 'none';
+      }
+      document.getElementById('modal-menu').classList.remove('hidden');
+    }
+
+    function closeMenuModal() {
+      document.getElementById('modal-menu').classList.add('hidden');
+    }
+
+    function hostEndGameAction() {
+      if (!confirm("Vuoi terminare la partita per tutti e tornare alla Home?")) return;
+      closeMenuModal();
+      clearUnoTimer();
+      
+      if (roomRef) {
+        roomRef.update({ status: 'ended' }).then(() => {
+          returnToHomeView();
+        });
+      } else {
+        returnToHomeView();
+      }
+    }
+
+    function leaveRoomAction() {
+      if (!confirm("Vuoi uscire dalla stanza e tornare alla Home?")) return;
+      closeMenuModal();
+
+      if (roomRef && currentGameState && currentGameState.players) {
+        const leavingPlayer = currentGameState.players.find(p => p.id === myId);
+        const remainingPlayers = currentGameState.players.filter(p => p.id !== myId);
+
+        if (isHost) {
+          roomRef.update({ status: 'ended' }).then(() => {
+            returnToHomeView();
+          });
+          return;
+        }
+
+        let nextTurn = currentGameState.currentTurn;
+        if (nextTurn >= remainingPlayers.length) {
+          nextTurn = 0;
+        }
+
+        roomRef.update({
+          players: remainingPlayers,
+          currentTurn: nextTurn,
+          lastPlayerLeft: {
+            id: myId,
+            name: leavingPlayer ? leavingPlayer.name : "Un giocatore",
+            timestamp: Date.now()
+          }
+        }).then(() => {
+          returnToHomeView();
+        });
+      } else {
+        returnToHomeView();
+      }
+    }
+
+    function pressStartGame() {
+      if (!isHost || !currentGameState) return;
+
+      const playersList = currentGameState.players;
+      if (!playersList || playersList.length === 0) return alert("Nessun giocatore in stanza!");
+
+      soundShuffleCards();
+
+      const deck = createDeckForPlayerCount(playersList.length);
+      playersList.forEach(p => {
+        p.hand = [];
+        p.score = 0;
+        p.eliminated = false;
+        for (let i = 0; i < 5; i++) {
+          p.hand.push(deck.pop());
+        }
+      });
+
+      let firstCard = deck.pop();
+      while (['A', '2', '8', '9'].includes(firstCard.value)) {
+        deck.unshift(firstCard);
+        firstCard = deck.pop();
+      }
+
+      hasCalledUnoSuccessfully = false;
+      resetUnoBtnUI();
+      lastHandLength = 5;
+
+      roomRef.update({
+        status: 'playing',
+        deck: deck,
+        discardPile: [firstCard],
+        activeSuit: firstCard.suit,
+        currentTurn: 0,
+        direction: 1,
+        pendingDrawCount: 0,
+        aceComboActive: false,
+        drawnThisTurn: false,
+        players: playersList,
+        cardsPerPlayer: 5,
+        lastWinnerIndex: 0,
+        consecutiveWins: {}
+      });
+    }
+
+    function isPlayable(card) {
+      if (!currentGameState || !currentGameState.discardPile) return false;
+      const top = currentGameState.discardPile[currentGameState.discardPile.length - 1];
+
+      if (currentGameState.pendingDrawCount > 0) {
+        return card.value === '2';
+      }
+
+      if (currentGameState.aceComboActive) {
+        return card.value === 'A' || card.value === '9' || card.suit === currentGameState.activeSuit;
+      }
+
+      if (card.value === '9') return true;
+
+      return card.suit === currentGameState.activeSuit || card.value === top.value;
+    }
+
+    function renderCard(card, targetEl) {
+      if (!card) return;
+      targetEl.className = `card ${card.red ? 'red' : ''}`;
+      targetEl.innerHTML = `
+        <div class="card-top">${card.value}<br>${card.suit}</div>
+        <div class="card-mid">${card.suit}</div>
+        <div class="card-bot">${card.value}</div>
+      `;
+    }
+
+    function startUnoTimer() {
+      clearUnoTimer();
+      hasCalledUnoSuccessfully = false;
+      const unoBtn = document.getElementById('always-uno-btn');
+      unoBtn.classList.add('warning-alert');
+
+      unoPenaltyTimeout = setTimeout(() => {
+        if (!hasCalledUnoSuccessfully) {
+          unoBtn.classList.remove('warning-alert');
+          soundTeasingPenalty();
+          alert("⏱️ Non hai premuto 'CHIAMA UNO' entro 3 secondi! Peschi 2 carte di penalità.");
+          applyUnoPenalty();
+        }
+      }, 3000);
+    }
+
+    function clearUnoTimer() {
+      if (unoPenaltyTimeout) {
+        clearTimeout(unoPenaltyTimeout);
+        unoPenaltyTimeout = null;
+      }
+    }
+
+    function resetUnoBtnUI() {
+      const btn = document.getElementById('always-uno-btn');
+      btn.className = 'table-uno-btn';
+      btn.textContent = '🔔 CHIAMA UNO!';
+    }
+
+    function clickUnoButton() {
+      const me = (currentGameState.players || []).find(p => p.id === myId);
+      if (!me) return;
+
+      if ((me.hand || []).length === 1) {
+        hasCalledUnoSuccessfully = true;
+        clearUnoTimer();
+
+        roomRef.update({
+          lastUnoCall: {
+            id: myId,
+            name: me.name,
+            timestamp: Date.now()
+          }
+        });
+
+        const btn = document.getElementById('always-uno-btn');
+        btn.classList.remove('warning-alert');
+        btn.classList.add('success');
+        btn.textContent = '✅ UNO CHIAMATO!';
+      }
+    }
+
+    function drawCardWithShuffle(deck, discard) {
+      if (deck.length === 0) {
+        if (discard.length > 1) {
+          soundShuffleCards();
+          const topVisible = discard[discard.length - 1];
+          const cardsToShuffle = discard.slice(0, discard.length - 1);
+          deck = cardsToShuffle.sort(() => Math.random() - 0.5);
+          discard = [topVisible];
+        }
+      }
+      const drawnCard = deck.length > 0 ? deck.pop() : null;
+      return { card: drawnCard, deck: deck, discard: discard };
+    }
+
+    function applyUnoPenalty() {
+      if (!roomRef || !currentGameState) return;
+      let deck = currentGameState.deck ? [...currentGameState.deck] : [];
+      let discard = currentGameState.discardPile ? [...currentGameState.discardPile] : [];
+      const players = currentGameState.players.map(p => ({
+        ...p,
+        hand: p.hand ? [...p.hand] : []
+      }));
+      const me = players.find(p => p.id === myId);
+
+      for (let i = 0; i < 2; i++) {
+        const res = drawCardWithShuffle(deck, discard);
+        deck = res.deck;
+        discard = res.discard;
+        if (res.card) {
+          me.hand.push(res.card);
+        }
+      }
+
+      hasCalledUnoSuccessfully = false;
+      resetUnoBtnUI();
+
+      roomRef.update({
+        deck: deck,
+        discardPile: discard,
+        players: players
+      });
+    }
+
+    function updateGameUI() {
+      if (!currentGameState || !currentGameState.discardPile || currentGameState.discardPile.length === 0) return;
+
+      const players = currentGameState.players || [];
+      const currentTurnIdx = currentGameState.currentTurn;
+      const activePlayer = players[currentTurnIdx];
+      const isMyTurn = activePlayer && activePlayer.id === myId;
+
+      const tableFeltBox = document.getElementById('table-felt-box');
+      if (isMyTurn && !wasMyTurnPrevious) {
+        soundYourTurn();
+        tableFeltBox.classList.add('my-turn-glow');
+      } else if (!isMyTurn) {
+        tableFeltBox.classList.remove('my-turn-glow');
+      }
+      wasMyTurnPrevious = isMyTurn;
+
+      document.getElementById('status-direction').textContent = currentGameState.direction === 1 ? '↻ Orario' : '↺ Antiorario';
+      document.getElementById('status-turn').textContent = isMyTurn ? 'Tocca a te!' : `Turno: ${activePlayer ? activePlayer.name : ''}`;
+
+      const opponentsLayer = document.getElementById('table-opponents-layer');
+      opponentsLayer.innerHTML = '';
+
+      const myIndex = players.findIndex(p => p.id === myId);
+      const otherPlayers = [];
+      for (let i = 1; i < players.length; i++) {
+        const idx = (myIndex + i) % players.length;
+        otherPlayers.push({ ...players[idx], originalIndex: idx });
+      }
+
+      const totalOthers = otherPlayers.length;
+      otherPlayers.forEach((p, i) => {
+        let angleDeg;
+        if (totalOthers === 1) {
+          angleDeg = 270;
+        } else {
+          const startAngle = 170;
+          const endAngle = 370;
+          angleDeg = startAngle + (i * (endAngle - startAngle) / (totalOthers - 1));
+        }
+
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const rx = 44;
+        const ry = 42;
+        const posX = 50 + rx * Math.cos(angleRad);
+        const posY = 50 + ry * Math.sin(angleRad);
+
+        const isPlayerTurn = p.originalIndex === currentTurnIdx;
+
+        const node = document.createElement('div');
+        node.className = `avatar-node ${isPlayerTurn ? 'active-turn' : ''} ${p.eliminated ? 'eliminated' : ''}`;
+        node.style.left = `${posX}%`;
+        node.style.top = `${posY}%`;
+
+        node.innerHTML = `
+          <div class="avatar-circle">
+            ${p.name.charAt(0).toUpperCase()}
+            <div class="avatar-badge-cards">🂠 ${p.hand ? p.hand.length : 0}</div>
+          </div>
+          <div class="avatar-info">
+            <div class="avatar-name">${p.name}</div>
+            <div class="avatar-score">${p.score || 0}/101</div>
+          </div>
+        `;
+        opponentsLayer.appendChild(node);
+      });
+
+      const topCardEl = document.getElementById('top-card');
+      const top = currentGameState.discardPile[currentGameState.discardPile.length - 1];
+      renderCard(top, topCardEl);
+
+      const suitPill = document.getElementById('suit-pill-box');
+      const suitDisplay = document.getElementById('active-suit-display');
+      const activeSuit = currentGameState.activeSuit || '♥️';
+      suitDisplay.textContent = activeSuit;
+      
+      const isRedSuit = (activeSuit === '♥️' || activeSuit === '♦️');
+      suitPill.className = `active-suit-pill ${isRedSuit ? 'red' : 'black'}`;
+      suitDisplay.style.color = isRedSuit ? '#f87171' : '#38bdf8';
+
+      const me = players.find(p => p.id === myId);
+      if (!me) return;
+
+      document.getElementById('my-score-display').textContent = me.score || 0;
+
+      const myHandEl = document.getElementById('my-hand');
+      myHandEl.innerHTML = '';
+      const myHand = me.hand || [];
+      document.getElementById('my-cards-count').textContent = myHand.length;
+
+      if (myHand.length > lastHandLength && currentGameState.discardPile.length > 1) {
+        const prevTop = currentGameState.discardPile[currentGameState.discardPile.length - 2];
+        if (prevTop && prevTop.value === '2') {
+          soundTeasingPenalty();
+        }
+      }
+      lastHandLength = myHand.length;
+
+      if (myHand.length !== 1) {
+        clearUnoTimer();
+        hasCalledUnoSuccessfully = false;
+        resetUnoBtnUI();
+      }
+
+      const n = myHand.length;
+      const maxAngle = Math.min(36, n * 8);
+      const angleStep = n > 1 ? maxAngle / (n - 1) : 0;
+      const startAngle = -(maxAngle / 2);
+      const cardSpacing = n > 4 ? Math.max(22, 180 / n) : 34;
+
+      myHand.forEach((card, i) => {
+        const cDiv = document.createElement('div');
+        cDiv.className = `card fan-card ${card.red ? 'red' : ''}`;
+        cDiv.innerHTML = `
+          <div class="card-top">${card.value}<br>${card.suit}</div>
+          <div class="card-mid">${card.suit}</div>
+          <div class="card-bot">${card.value}</div>
+        `;
+
+        const rot = n > 1 ? (startAngle + (i * angleStep)) : 0;
+        const xOffset = (i - (n - 1) / 2) * cardSpacing;
+        const yOffset = Math.abs(rot) * 0.45;
+        const baseTransform = `translateX(${xOffset}px) translateY(${yOffset}px) rotate(${rot}deg)`;
+
+        cDiv.style.setProperty('--base-transform', baseTransform);
+        cDiv.style.transform = baseTransform;
+        cDiv.style.zIndex = i + 1;
+
+        cDiv.onclick = (e) => onCardClick(i, cDiv);
+        myHandEl.appendChild(cDiv);
+      });
+
+      const btnDraw = document.getElementById('btn-draw');
+      btnDraw.disabled = !isMyTurn || me.eliminated;
+      if (currentGameState.drawnThisTurn) {
+        btnDraw.textContent = "Passa Turno";
+        btnDraw.onclick = actionPass;
+      } else {
+        if (currentGameState.pendingDrawCount > 0) {
+          btnDraw.textContent = `Pesca +${currentGameState.pendingDrawCount}`;
+        } else {
+          btnDraw.textContent = "Pesca carta";
+        }
+        btnDraw.onclick = actionDraw;
+      }
+    }
+
+    function onCardClick(idx, cardElement) {
+      const activePlayer = currentGameState.players[currentGameState.currentTurn];
+      if (!activePlayer || activePlayer.id !== myId) return;
+
+      const me = currentGameState.players.find(p => p.id === myId);
+      const card = me.hand[idx];
+
+      if (!isPlayable(card)) {
+        return;
+      }
+
+      // SE CALO UN 9 E RIMANGO CON 1 CARTA: PRIMA PARTONO I 3 SECONDI DI UNO, POI LA SCELTA DEL SEME
+      if (card.value === '9' && me.hand.length === 2) {
+        executePlayCardPart1For9(idx);
+        return;
+      }
+
+      if (me.hand.length === 1 && !hasCalledUnoSuccessfully) {
+        soundTeasingPenalty();
+        alert("⚠️ PENALITÀ! Hai cercato di chiudere senza chiamare UNO: peschi 2 carte!");
+        clearUnoTimer();
+        applyUnoPenalty();
+        return;
+      }
+
+      if (card.value === '9' && currentGameState.aceComboActive) {
+        executePlayCard(idx, currentGameState.activeSuit);
+      } else if (card.value === '9') {
+        pending9CardIndex = idx;
+        document.getElementById('suit-modal').classList.remove('hidden');
+      } else {
+        executePlayCard(idx, null);
+      }
+    }
+
+    function executePlayCardPart1For9(cardIdx) {
+      soundPlayCard();
+      let deck = currentGameState.deck ? [...currentGameState.deck] : [];
+      let discard = [...(currentGameState.discardPile || [])];
+      const players = currentGameState.players.map(p => ({
+        ...p,
+        hand: p.hand ? [...p.hand] : []
+      }));
+      const me = players.find(p => p.id === myId);
+      const card = me.hand.splice(cardIdx, 1)[0];
+
+      discard.push(card);
+      let newPendingDraw = currentGameState.pendingDrawCount || 0;
+      let newDirection = currentGameState.direction || 1;
+
+      // Avvia timer UNO prioritario
+      startUnoTimer();
+
+      roomRef.update({
+        players: players,
+        deck: deck,
+        discardPile: discard,
+        activeSuit: card.suit,
+        pendingDrawCount: newPendingDraw,
+        direction: newDirection,
+        aceComboActive: false,
+        drawnThisTurn: false
+      }).then(() => {
+        // Apre la scelta del seme DOPO aver avviato il timer UNO per la carta rimasta
+        setTimeout(() => {
+          document.getElementById('suit-modal').classList.remove('hidden');
+        }, 300);
+      });
+    }
+
+    function chooseSuit(suit) {
+      document.getElementById('suit-modal').classList.add('hidden');
+      roomRef.child('activeSuit').set(suit);
+    }
+
+    function executePlayCard(cardIdx, chosenSuit) {
+      soundPlayCard();
+      let deck = currentGameState.deck ? [...currentGameState.deck] : [];
+      let discard = [...(currentGameState.discardPile || [])];
+      const players = currentGameState.players.map(p => ({
+        ...p,
+        hand: p.hand ? [...p.hand] : []
+      }));
+      const me = players.find(p => p.id === myId);
+      const card = me.hand.splice(cardIdx, 1)[0];
+
+      discard.push(card);
+
+      let newSuit = (card.value === '9' && chosenSuit) ? chosenSuit : card.suit;
+      if (card.value === '9' && currentGameState.aceComboActive) {
+        newSuit = currentGameState.activeSuit;
+      }
+
+      let newPendingDraw = currentGameState.pendingDrawCount || 0;
+      let newDirection = currentGameState.direction || 1;
+      let nextTurn = currentGameState.currentTurn;
+      let isAceCombo = false;
+      let hasDrawn = false;
+
+      if (card.value === '2') {
+        newPendingDraw += 2;
+      }
+      if (card.value === '8') {
+        newDirection *= -1;
+      }
+
+      if (me.hand.length === 1 && !hasCalledUnoSuccessfully) {
+        startUnoTimer();
+      }
+
+      if (card.value === 'A') {
+        isAceCombo = true;
+        nextTurn = currentGameState.currentTurn;
+
+        if (me.hand.length === 0) {
+          const res = drawCardWithShuffle(deck, discard);
+          deck = res.deck;
+          discard = res.discard;
+          if (res.card) {
+            me.hand.push(res.card);
+          }
+          hasDrawn = true;
+          if (me.hand.length === 1 && !hasCalledUnoSuccessfully) {
+            startUnoTimer();
+          }
+        }
+      } else {
+        isAceCombo = false;
+
+        if (me.hand.length === 0) {
+          clearUnoTimer();
+
+          let victim = null;
+          if (card.value === '2' && newPendingDraw > 0) {
+            const myIndex = players.findIndex(p => p.id === myId);
+            let nextIndex = myIndex;
+            do {
+              nextIndex = (nextIndex + newDirection + players.length) % players.length;
+            } while (players[nextIndex].eliminated && nextIndex !== myIndex);
+
+            if (nextIndex !== myIndex) {
+              victim = players[nextIndex];
+              for (let i = 0; i < newPendingDraw; i++) {
+                const res = drawCardWithShuffle(deck, discard);
+                deck = res.deck;
+                discard = res.discard;
+                if (res.card) {
+                  victim.hand.push(res.card);
+                }
+              }
+            }
+          }
+
+          handleEndRound(me, players, victim, newPendingDraw);
+          return;
+        }
+
+        const activePlayersCount = players.filter(p => !p.eliminated).length;
+        if (card.value === '8' && activePlayersCount === 2) {
+          // Con 2 giocatori l'8 fa rigiocare
+        } else {
+          do {
+            nextTurn = (nextTurn + newDirection + players.length) % players.length;
+          } while (players[nextTurn].eliminated);
+        }
+      }
+
+      roomRef.update({
+        players: players,
+        deck: deck,
+        discardPile: discard,
+        activeSuit: newSuit,
+        pendingDrawCount: newPendingDraw,
+        direction: newDirection,
+        aceComboActive: isAceCombo,
+        drawnThisTurn: hasDrawn,
+        currentTurn: nextTurn
+      });
+    }
+
+    function actionDraw() {
+      const activePlayer = currentGameState.players[currentGameState.currentTurn];
+      if (!activePlayer || activePlayer.id !== myId) return;
+
+      clearUnoTimer();
+      soundDrawCard();
+
+      let deck = currentGameState.deck ? [...currentGameState.deck] : [];
+      let discard = currentGameState.discardPile ? [...currentGameState.discardPile] : [];
+      const players = currentGameState.players.map(p => ({
+        ...p,
+        hand: p.hand ? [...p.hand] : []
+      }));
+      const me = players.find(p => p.id === myId);
+
+      const countToDraw = currentGameState.pendingDrawCount > 0 ? currentGameState.pendingDrawCount : 1;
+
+      for (let i = 0; i < countToDraw; i++) {
+        const res = drawCardWithShuffle(deck, discard);
+        deck = res.deck;
+        discard = res.discard;
+        if (res.card) {
+          me.hand.push(res.card);
+        }
+      }
+
+      roomRef.update({
+        deck: deck,
+        discardPile: discard,
+        players: players,
+        pendingDrawCount: 0,
+        drawnThisTurn: true
+      });
+    }
+
+    function actionPass() {
+      clearUnoTimer();
+      soundTurnClose();
+
+      const players = currentGameState.players;
+      let nextTurn = currentGameState.currentTurn;
+      do {
+        nextTurn = (nextTurn + currentGameState.direction + players.length) % players.length;
+      } while (players[nextTurn].eliminated);
+
+      roomRef.update({ 
+        currentTurn: nextTurn,
+        aceComboActive: false,
+        drawnThisTurn: false 
+      });
+    }
+
+    function handleEndRound(winner, players, victim, penaltyCardsCount) {
+      soundShuffleCards();
+      let summary = `${winner.name} vince la mano!\n`;
+
+      if (victim && penaltyCardsCount > 0) {
+        summary += `💥 Chiusura col 2! ${victim.name} ha pescato ${penaltyCardsCount} carte prima del conteggio!\n`;
+      }
+
+      let consecutiveWins = currentGameState.consecutiveWins || {};
+      let prevWins = consecutiveWins[winner.id] || 0;
+      let newWins = prevWins + 1;
+      consecutiveWins[winner.id] = newWins;
+
+      let bonusMsg = "";
+      if (newWins >= 2) {
+        bonusMsg = `🔥 ${winner.name} ha vinto 2 turni di fila: -5 punti bonus!\n`;
+      }
+
+      summary += `\nPunteggi aggiunti:\n`;
+      const winnerIdx = players.findIndex(p => p.id === winner.id);
+
+      players.forEach(p => {
+        if (!p.eliminated) {
+          const handPts = (p.hand || []).reduce((sum, c) => sum + getPoints(c.value), 0);
+          p.score = (p.score || 0) + handPts;
+
+          if (p.id === winner.id && newWins >= 2) {
+            p.score = Math.max(0, p.score - 5);
+            consecutiveWins[p.id] = 0;
+          } else if (p.id !== winner.id) {
+            consecutiveWins[p.id] = 0;
+          }
+
+          summary += `• ${p.name}: +${handPts} pt (Tot: ${p.score})\n`;
+
+          if (p.score >= 101) {
+            p.eliminated = true;
+            summary += `  ❌ ${p.name} eliminato!\n`;
+          }
+        }
+      });
+
+      if (bonusMsg) {
+        summary = bonusMsg + "\n" + summary;
+      }
+
+      const remaining = players.filter(p => !p.eliminated);
+      const isGameEnd = remaining.length <= 1;
+      if (isGameEnd) {
+        summary += `\n🏆 VINCITORE DELLA PARTITA: ${remaining[0] ? remaining[0].name : 'Nessuno'}!`;
+      }
+
+      roomRef.update({
+        status: 'round_over',
+        players: players,
+        consecutiveWins: consecutiveWins,
+        roundSummary: summary,
+        isGameEnd: isGameEnd,
+        lastWinnerIndex: winnerIdx,
+        lastRoundVictory: {
+          timestamp: Date.now()
+        }
+      });
+    }
+
+    function showRoundOverModal(msg, isGameEnd) {
+      const modal = document.getElementById('info-modal');
+      document.getElementById('info-title').textContent = isGameEnd ? "🏆 Partita Finita!" : "Fine Round";
+      document.getElementById('info-msg').textContent = msg;
+      
+      const btn = document.getElementById('info-btn');
+      const guestWaiting = document.getElementById('guest-info-waiting');
+
+      if (isHost) {
+        btn.style.display = "block";
+        btn.textContent = isGameEnd ? "Nuova Partita" : "Inizia Prossimo Round";
+        guestWaiting.classList.add('hidden');
+      } else {
+        btn.style.display = "none";
+        guestWaiting.classList.remove('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function nextRoundAction() {
+      if (!isHost) return;
+      if (currentGameState.isGameEnd) {
+        const players = currentGameState.players.map(p => ({
+          ...p, score: 0, eliminated: false, hand: []
+        }));
+        roomRef.update({ status: 'lobby', players: players, consecutiveWins: {} });
+      } else {
+        soundShuffleCards();
+
+        const playersList = currentGameState.players;
+        const deck = createDeckForPlayerCount(playersList.length);
+
+        playersList.forEach(p => {
+          p.hand = [];
+          if (!p.eliminated) {
+            for (let i = 0; i < 5; i++) {
+              p.hand.push(deck.pop());
+            }
+          }
+        });
+
+        let firstCard = deck.pop();
+        while (['A', '2', '8', '9'].includes(firstCard.value)) {
+          deck.unshift(firstCard);
+          firstCard = deck.pop();
+        }
+
+        const winnerIndex = typeof currentGameState.lastWinnerIndex === 'number' 
+          ? currentGameState.lastWinnerIndex 
+          : 0;
+
+        let nextStartingTurn = winnerIndex;
+        do {
+          nextStartingTurn = (nextStartingTurn + 1) % playersList.length;
+        } while (playersList[nextStartingTurn].eliminated);
+
+        hasCalledUnoSuccessfully = false;
+        resetUnoBtnUI();
+
+        roomRef.update({
+          status: 'playing',
+          deck: deck,
+          discardPile: [firstCard],
+          activeSuit: firstCard.suit,
+          currentTurn: nextStartingTurn,
+          direction: 1,
+          pendingDrawCount: 0,
+          aceComboActive: false,
+          drawnThisTurn: false,
+          players: playersList,
+          cardsPerPlayer: 5
+        });
+      }
+    }
+  </script>
+</body>
+</html>

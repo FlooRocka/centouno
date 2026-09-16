@@ -17,7 +17,6 @@
       --card-bg: #ffffff;
       --text: #f8fafc;
       --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.7);
       --danger: #ef4444;
       --warning: #f59e0b;
       --success: #22c55e;
@@ -94,10 +93,6 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .icon-btn:active {
-      transform: scale(0.9);
     }
     .icon-btn.active-call {
       background: var(--success);
@@ -117,7 +112,6 @@
       font-weight: 700;
       box-shadow: 0 4px 16px rgba(0,0,0,0.6);
       z-index: 150;
-      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       pointer-events: none;
       white-space: nowrap;
     }
@@ -150,6 +144,11 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+      transition: box-shadow 0.3s ease;
+    }
+    .poker-table.my-turn-glow {
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 25px rgba(56, 189, 248, 0.7), inset 0 0 15px rgba(56, 189, 248, 0.4);
+      border-color: #38bdf8;
     }
 
     .piles-area {
@@ -179,22 +178,10 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       cursor: pointer;
       touch-action: manipulation;
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .table-uno-btn:active {
-      transform: scale(0.92);
     }
     .table-uno-btn.success {
       background: var(--success);
       border-color: #bbf7d0;
-      transform: scale(1.05);
-    }
-    .table-uno-btn.warning-alert {
-      animation: alertBlink 0.4s infinite alternate;
-    }
-    @keyframes alertBlink {
-      from { box-shadow: 0 0 4px rgba(220, 38, 38, 0.4); transform: scale(1); }
-      to { box-shadow: 0 0 20px rgba(220, 38, 38, 1); transform: scale(1.06); }
     }
 
     .avatar-node {
@@ -203,7 +190,6 @@
       flex-direction: column;
       align-items: center;
       transform: translate(-50%, -50%);
-      transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
       z-index: 10;
       width: 72px;
       pointer-events: none;
@@ -222,7 +208,6 @@
       color: #fff;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
       position: relative;
-      transition: all 0.3s ease;
     }
     .avatar-badge-cards {
       position: absolute;
@@ -239,7 +224,6 @@
       display: flex;
       align-items: center;
       gap: 2px;
-      transition: transform 0.2s ease;
     }
     .avatar-info {
       margin-top: 4px;
@@ -265,13 +249,12 @@
     }
 
     .avatar-node.active-turn {
-      transform: translate(-50%, -50%) scale(1.14);
+      transform: translate(-50%, -50%) scale(1.12);
       z-index: 15;
     }
     .avatar-node.active-turn .avatar-circle {
       border-color: var(--accent);
-      box-shadow: 0 0 18px var(--accent-glow), inset 0 0 8px var(--accent);
-      animation: avatarPulse 1.4s infinite alternate;
+      box-shadow: 0 0 16px var(--accent-glow), inset 0 0 8px var(--accent);
     }
     .avatar-node.active-turn .avatar-info {
       border-color: var(--accent);
@@ -280,11 +263,6 @@
     .avatar-node.eliminated {
       opacity: 0.35;
       filter: grayscale(1);
-    }
-
-    @keyframes avatarPulse {
-      from { box-shadow: 0 0 8px var(--accent-glow); }
-      to { box-shadow: 0 0 22px var(--accent); }
     }
 
     .card {
@@ -312,24 +290,6 @@
     .card-back {
       background: repeating-linear-gradient(45deg, #1e3a8a, #1e3a8a 8px, #172554 8px, #172554 16px);
       border: 2px solid #fff;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .deck-draw-pop {
-      animation: deckPop 0.28s ease-out;
-    }
-    @keyframes deckPop {
-      0% { transform: scale(1); }
-      40% { transform: scale(0.91) translateY(3px); }
-      100% { transform: scale(1); }
-    }
-
-    .discard-slam {
-      animation: discardSlam 0.28s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    @keyframes discardSlam {
-      0% { transform: scale(1.18) rotate(-4deg); opacity: 0.85; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
 
     #hand-area {
@@ -365,20 +325,18 @@
       gap: 5px;
       font-size: 0.78rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
     }
     .active-suit-pill.red {
       border-color: #ef4444;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
     }
     .active-suit-pill.black {
       border-color: var(--accent);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
     .active-suit-icon {
       font-size: 1.1rem;
       line-height: 1;
-      transition: transform 0.25s ease;
     }
 
     .fan-container {
@@ -396,32 +354,7 @@
     .fan-card {
       position: absolute;
       transform-origin: 50% 120%;
-      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, opacity 0.2s ease;
       box-shadow: -2px 4px 10px rgba(0,0,0,0.4);
-      animation: cardDealIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15) backwards;
-    }
-    .fan-card:hover, .fan-card:active {
-      transform: var(--base-transform) translateY(-26px) scale(1.08) !important;
-      z-index: 50 !important;
-      box-shadow: 0 12px 26px rgba(0,0,0,0.75);
-    }
-
-    @keyframes cardDealIn {
-      0% {
-        opacity: 0;
-        transform: translateY(40px) scale(0.85);
-      }
-      100% {
-        opacity: 1;
-      }
-    }
-
-    .card-fly-out {
-      pointer-events: none !important;
-      transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease !important;
-      transform: translateY(-130px) scale(0.9) rotate(6deg) !important;
-      opacity: 0.15 !important;
-      z-index: 100 !important;
     }
     
     .btn {
@@ -434,10 +367,6 @@
       font-size: 0.82rem;
       cursor: pointer;
       touch-action: manipulation;
-      transition: transform 0.15s ease, filter 0.15s ease;
-    }
-    .btn:active {
-      transform: scale(0.94);
     }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
@@ -453,11 +382,6 @@
       z-index: 100;
       padding: 16px;
       padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      animation: modalFadeIn 0.25s ease-out;
-    }
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
     .modal.hidden { display: none !important; }
     .modal-box {
@@ -473,11 +397,6 @@
       gap: 14px;
       max-height: 90dvh;
       overflow-y: auto;
-      animation: modalPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.15);
-    }
-    @keyframes modalPop {
-      0% { transform: scale(0.9) translateY(12px); opacity: 0; }
-      100% { transform: scale(1) translateY(0); opacity: 1; }
     }
     .input-field {
       padding: 12px;
@@ -501,10 +420,6 @@
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .suit-btn:active {
-      transform: scale(0.92);
     }
     .suit-btn.red { color: #f87171; }
     .lobby-player-list {
@@ -561,7 +476,7 @@
   <main id="arena">
     <div id="table-opponents-layer"></div>
 
-    <div class="poker-table">
+    <div id="table-felt-box" class="poker-table">
       <div class="piles-area">
         <div class="card-slot">
           <div id="deck" class="card card-back" onclick="actionDraw()"></div>
@@ -579,7 +494,7 @@
   <section id="hand-area">
     <div class="game-actions">
       <div class="hand-meta-left">
-        <span>La tua mano (<span id="my-cards-count">0</span>)</span>
+        <span>La tua mano (<span id="my-cards-count">0</span>) | Punti: <strong id="my-score-display" style="color: var(--accent);">0</strong>/101</span>
         <div id="suit-pill-box" class="active-suit-pill">
           <span style="font-size: 0.65rem; text-transform: uppercase; color: #94a3b8;">Seme:</span>
           <span id="active-suit-display" class="active-suit-icon">♥️</span>
@@ -815,6 +730,23 @@
       gain.connect(audioCtx.destination);
       noise.start(now);
       noise.stop(now + 0.19);
+    }
+
+    function soundYourTurn() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.setValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
     }
 
     function soundShuffleCards() {
@@ -1147,6 +1079,7 @@
     let lastSeenVictoryTimestamp = 0;
     let previousDiscardCount = 0;
     let lastHandLength = 5;
+    let wasMyTurnPrevious = false;
 
     window.addEventListener('DOMContentLoaded', () => {
       const savedName = localStorage.getItem('gioco101_userName');
@@ -1213,6 +1146,7 @@
       isHost = false;
       previousDiscardCount = 0;
       lastHandLength = 5;
+      wasMyTurnPrevious = false;
 
       if (localStream) {
         localStream.getTracks().forEach(t => t.stop());
@@ -1244,6 +1178,7 @@
       document.getElementById('table-opponents-layer').innerHTML = '';
       document.getElementById('my-hand').innerHTML = '';
       document.getElementById('my-cards-count').textContent = '0';
+      document.getElementById('my-score-display').textContent = '0';
       document.getElementById('status-turn').textContent = 'Lobby';
     }
 
@@ -1266,7 +1201,8 @@
         hostId: myId,
         status: 'lobby',
         players: [{ id: myId, name: myNickname, hand: [], score: 0, eliminated: false }],
-        cardsPerPlayer: 5
+        cardsPerPlayer: 5,
+        consecutiveWins: {}
       };
 
       roomRef.set(initialData).then(() => {
@@ -1572,7 +1508,8 @@
         drawnThisTurn: false,
         players: playersList,
         cardsPerPlayer: 5,
-        lastWinnerIndex: 0
+        lastWinnerIndex: 0,
+        consecutiveWins: {}
       });
     }
 
@@ -1706,6 +1643,15 @@
       const activePlayer = players[currentTurnIdx];
       const isMyTurn = activePlayer && activePlayer.id === myId;
 
+      const tableFeltBox = document.getElementById('table-felt-box');
+      if (isMyTurn && !wasMyTurnPrevious) {
+        soundYourTurn();
+        tableFeltBox.classList.add('my-turn-glow');
+      } else if (!isMyTurn) {
+        tableFeltBox.classList.remove('my-turn-glow');
+      }
+      wasMyTurnPrevious = isMyTurn;
+
       document.getElementById('status-direction').textContent = currentGameState.direction === 1 ? '↻ Orario' : '↺ Antiorario';
       document.getElementById('status-turn').textContent = isMyTurn ? 'Tocca a te!' : `Turno: ${activePlayer ? activePlayer.name : ''}`;
 
@@ -1760,14 +1706,6 @@
       const top = currentGameState.discardPile[currentGameState.discardPile.length - 1];
       renderCard(top, topCardEl);
 
-      const currentDiscardCount = currentGameState.discardPile.length;
-      if (currentDiscardCount !== previousDiscardCount) {
-        topCardEl.classList.remove('discard-slam');
-        void topCardEl.offsetWidth;
-        topCardEl.classList.add('discard-slam');
-        previousDiscardCount = currentDiscardCount;
-      }
-
       const suitPill = document.getElementById('suit-pill-box');
       const suitDisplay = document.getElementById('active-suit-display');
       const activeSuit = currentGameState.activeSuit || '♥️';
@@ -1779,6 +1717,8 @@
 
       const me = players.find(p => p.id === myId);
       if (!me) return;
+
+      document.getElementById('my-score-display').textContent = me.score || 0;
 
       const myHandEl = document.getElementById('my-hand');
       myHandEl.innerHTML = '';
@@ -1853,6 +1793,12 @@
         return;
       }
 
+      // SE CALO UN 9 E RIMANGO CON 1 CARTA: PRIMA PARTONO I 3 SECONDI DI UNO, POI LA SCELTA DEL SEME
+      if (card.value === '9' && me.hand.length === 2) {
+        executePlayCardPart1For9(idx);
+        return;
+      }
+
       if (me.hand.length === 1 && !hasCalledUnoSuccessfully) {
         soundTeasingPenalty();
         alert("⚠️ PENALITÀ! Hai cercato di chiudere senza chiamare UNO: peschi 2 carte!");
@@ -1861,28 +1807,54 @@
         return;
       }
 
-      if (cardElement) {
-        cardElement.classList.add('card-fly-out');
+      if (card.value === '9' && currentGameState.aceComboActive) {
+        executePlayCard(idx, currentGameState.activeSuit);
+      } else if (card.value === '9') {
+        pending9CardIndex = idx;
+        document.getElementById('suit-modal').classList.remove('hidden');
+      } else {
+        executePlayCard(idx, null);
       }
+    }
 
-      setTimeout(() => {
-        if (card.value === '9' && currentGameState.aceComboActive) {
-          executePlayCard(idx, currentGameState.activeSuit);
-        } else if (card.value === '9') {
-          pending9CardIndex = idx;
+    function executePlayCardPart1For9(cardIdx) {
+      soundPlayCard();
+      let deck = currentGameState.deck ? [...currentGameState.deck] : [];
+      let discard = [...(currentGameState.discardPile || [])];
+      const players = currentGameState.players.map(p => ({
+        ...p,
+        hand: p.hand ? [...p.hand] : []
+      }));
+      const me = players.find(p => p.id === myId);
+      const card = me.hand.splice(cardIdx, 1)[0];
+
+      discard.push(card);
+      let newPendingDraw = currentGameState.pendingDrawCount || 0;
+      let newDirection = currentGameState.direction || 1;
+
+      // Avvia timer UNO prioritario
+      startUnoTimer();
+
+      roomRef.update({
+        players: players,
+        deck: deck,
+        discardPile: discard,
+        activeSuit: card.suit,
+        pendingDrawCount: newPendingDraw,
+        direction: newDirection,
+        aceComboActive: false,
+        drawnThisTurn: false
+      }).then(() => {
+        // Apre la scelta del seme DOPO aver avviato il timer UNO per la carta rimasta
+        setTimeout(() => {
           document.getElementById('suit-modal').classList.remove('hidden');
-        } else {
-          executePlayCard(idx, null);
-        }
-      }, 160);
+        }, 300);
+      });
     }
 
     function chooseSuit(suit) {
       document.getElementById('suit-modal').classList.add('hidden');
-      if (pending9CardIndex !== -1) {
-        executePlayCard(pending9CardIndex, suit);
-        pending9CardIndex = -1;
-      }
+      roomRef.child('activeSuit').set(suit);
     }
 
     function executePlayCard(cardIdx, chosenSuit) {
@@ -1997,13 +1969,6 @@
       clearUnoTimer();
       soundDrawCard();
 
-      const deckEl = document.getElementById('deck');
-      if (deckEl) {
-        deckEl.classList.remove('deck-draw-pop');
-        void deckEl.offsetWidth;
-        deckEl.classList.add('deck-draw-pop');
-      }
-
       let deck = currentGameState.deck ? [...currentGameState.deck] : [];
       let discard = currentGameState.discardPile ? [...currentGameState.discardPile] : [];
       const players = currentGameState.players.map(p => ({
@@ -2057,6 +2022,16 @@
         summary += `💥 Chiusura col 2! ${victim.name} ha pescato ${penaltyCardsCount} carte prima del conteggio!\n`;
       }
 
+      let consecutiveWins = currentGameState.consecutiveWins || {};
+      let prevWins = consecutiveWins[winner.id] || 0;
+      let newWins = prevWins + 1;
+      consecutiveWins[winner.id] = newWins;
+
+      let bonusMsg = "";
+      if (newWins >= 2) {
+        bonusMsg = `🔥 ${winner.name} ha vinto 2 turni di fila: -5 punti bonus!\n`;
+      }
+
       summary += `\nPunteggi aggiunti:\n`;
       const winnerIdx = players.findIndex(p => p.id === winner.id);
 
@@ -2064,6 +2039,14 @@
         if (!p.eliminated) {
           const handPts = (p.hand || []).reduce((sum, c) => sum + getPoints(c.value), 0);
           p.score = (p.score || 0) + handPts;
+
+          if (p.id === winner.id && newWins >= 2) {
+            p.score = Math.max(0, p.score - 5);
+            consecutiveWins[p.id] = 0;
+          } else if (p.id !== winner.id) {
+            consecutiveWins[p.id] = 0;
+          }
+
           summary += `• ${p.name}: +${handPts} pt (Tot: ${p.score})\n`;
 
           if (p.score >= 101) {
@@ -2072,6 +2055,10 @@
           }
         }
       });
+
+      if (bonusMsg) {
+        summary = bonusMsg + "\n" + summary;
+      }
 
       const remaining = players.filter(p => !p.eliminated);
       const isGameEnd = remaining.length <= 1;
@@ -2082,6 +2069,7 @@
       roomRef.update({
         status: 'round_over',
         players: players,
+        consecutiveWins: consecutiveWins,
         roundSummary: summary,
         isGameEnd: isGameEnd,
         lastWinnerIndex: winnerIdx,
@@ -2117,7 +2105,7 @@
         const players = currentGameState.players.map(p => ({
           ...p, score: 0, eliminated: false, hand: []
         }));
-        roomRef.update({ status: 'lobby', players: players });
+        roomRef.update({ status: 'lobby', players: players, consecutiveWins: {} });
       } else {
         soundShuffleCards();
 
